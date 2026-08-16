@@ -1,0 +1,113 @@
+# ASC-UAT v1.0
+
+Web app quản lý **Test Case → UAT Execution → Issue → Retest → Báo cáo** cho các dự án triển khai phần mềm quản trị trường Đại học.
+
+Ứng dụng chạy hoàn toàn ở phía trình duyệt (client-side). Không cần server ứng dụng, không cần database, không cần Node.js trên máy chủ.
+
+---
+
+## 1. Deploy nhanh nhất (2 phút)
+
+Thư mục **`dist/`** trong gói này đã được build sẵn. Chỉ cần đưa toàn bộ nội dung `dist/` lên bất kỳ web server tĩnh nào:
+
+| Môi trường | Cách làm |
+|---|---|
+| IIS / Apache / Nginx | Copy nội dung `dist/` vào thư mục web root |
+| Vercel / Netlify | Kéo thả thư mục `dist/` vào trang deploy |
+| Chia sẻ nội bộ | Copy `dist/` vào ổ mạng, mở `index.html` bằng trình duyệt |
+| Test thử ngay | `npx serve dist` rồi mở link hiện ra |
+
+Đường dẫn tài nguyên đã cấu hình dạng tương đối (`base: './'`), nên app chạy được cả khi đặt trong thư mục con, ví dụ `https://intranet.company.vn/uat/`.
+
+**Không mở trực tiếp bằng `file://`** — trình duyệt sẽ chặn module JavaScript. Luôn phục vụ qua HTTP.
+
+## 2. Build lại từ source
+
+Yêu cầu Node.js 18 trở lên.
+
+```bash
+npm install
+npm run build      # kết quả nằm trong dist/
+npm run dev        # chạy môi trường phát triển tại http://localhost:5173
+```
+
+---
+
+## 3. Dữ liệu được lưu ở đâu
+
+Toàn bộ dữ liệu nằm trong **IndexedDB của trình duyệt**, trên chính máy đang mở app.
+
+Điều này có ba hệ quả cần nắm rõ:
+
+- Mỗi máy / mỗi trình duyệt có kho dữ liệu **riêng biệt**. Hai người dùng không thấy dữ liệu của nhau.
+- **Xoá cache / dữ liệu duyệt web sẽ mất toàn bộ dữ liệu.**
+- Chế độ ẩn danh (incognito) sẽ mất dữ liệu khi đóng cửa sổ.
+
+Vì vậy hãy dùng **Thiết lập → Dữ liệu → Tải file backup** định kỳ (cuối mỗi ngày UAT). File backup là một file JSON chứa đầy đủ dự án, Test Case, kết quả từng vòng UAT và Issue. Khôi phục bằng nút **Khôi phục từ backup** ở cùng màn hình.
+
+File backup cũng chính là cách **chuyển dữ liệu sang máy khác** hoặc gộp việc của nhiều tester: mỗi người export, một người tổng hợp.
+
+---
+
+## 4. Luồng sử dụng
+
+1. Tạo dự án (mã dự án dùng làm tiền tố Test Case ID, ví dụ `EPU`)
+2. Tạo vòng UAT ở **Thiết lập → Vòng UAT** (Round 1, Round 2, Final…)
+3. Tạo Test Case, hoặc **Import Excel** từ file có sẵn
+4. Vào **Run UAT**, chạy lần lượt từng Test Case
+5. PASS chỉ cần 1 click. FAIL bắt buộc nhập Actual Result, sau đó bấm **Tạo Issue** (form tự điền sẵn steps, expected, actual, evidence)
+6. Khi dev báo đã sửa, đổi trạng thái Issue sang **FIXED / READY FOR RETEST**
+7. Vào **Retest**, retest đạt thì Issue tự chuyển **CLOSED** và Test Case ghi nhận PASS; không đạt thì Issue **REOPENED**
+8. Theo dõi ở **Dashboard**, xuất **Báo cáo** Excel gửi khách hàng
+
+Phím tắt trong Run UAT: `P` = PASS, `F` = FAIL, `B` = BLOCKED, `N` = case tiếp theo. `Ctrl+K` mở tìm nhanh ở mọi màn hình.
+
+### Hai nguyên tắc quan trọng
+
+- **Kết quả tách biệt theo từng vòng UAT.** Round 1 FAIL không bị ghi đè khi Round 2 PASS — lịch sử từng vòng được giữ nguyên để đối chiếu và báo cáo.
+- **FIXED không đồng nghĩa PASS.** Test Case chỉ được tính PASS sau khi retest đạt. Đây là điểm hay bị bỏ sót khi quản lý UAT bằng Excel.
+
+---
+
+## 5. Dữ liệu mẫu
+
+Lần đầu mở app, ở màn hình Dự án có nút **Dùng dữ liệu mẫu**: tạo dự án EPU với 24 Test Case thuộc 5 phân hệ, 2 vòng UAT và một số Issue ở các trạng thái khác nhau. Dùng để xem toàn bộ luồng hoạt động trước khi nhập liệu thật. Xoá dự án mẫu bất cứ lúc nào.
+
+---
+
+## 6. Import Excel
+
+App đọc dòng đầu tiên làm tiêu đề cột và tự nhận diện các cột thông dụng (cả tiếng Việt lẫn tiếng Anh):
+
+`Test Case ID` · `Module` · `Feature` · `Title` · `Pre-condition` · `Steps` · `Expected Result` · `Priority` · `Test Data` · `Tags`
+
+Bắt buộc có **Title** và **Module**. Mỗi dòng xuống dòng trong ô Steps sẽ thành một bước riêng. Màn hình import có preview, đếm số dòng hợp lệ/lỗi, và hỏi trước khi tạo Module mới.
+
+---
+
+## 7. Kiến trúc & hướng nâng cấp lên V2
+
+```
+src/
+  db.ts          Repository Layer — TOÀN BỘ truy cập dữ liệu đi qua đây
+  store.tsx      State toàn cục (React Context)
+  types.ts       Data model
+  lib/           stats.ts (thống kê) · excel.ts (import/export) · seed.ts (dữ liệu mẫu)
+  components/    UI dùng chung, Layout, các form lớn
+  views/         8 màn hình chính
+```
+
+Điểm quan trọng về kiến trúc: **không component nào gọi thẳng IndexedDB**. Tất cả đi qua các repository trong `db.ts` (`projectRepo`, `testCaseRepo`, `executionRepo`, `issueRepo`…).
+
+Khi cần chuyển sang **nhiều người dùng chung một server**, chỉ cần viết lại phần thân các hàm repository thành lời gọi REST API — giữ nguyên chữ ký hàm. Toàn bộ tầng giao diện không phải sửa. Đó là lý do V1 chấp nhận lưu local: đổi được về sau mà không phải viết lại.
+
+Công nghệ: Vite 5 · React 18 · TypeScript · Tailwind CSS 3 · Dexie (IndexedDB) · SheetJS (Excel).
+
+---
+
+## 8. Giới hạn đã biết của V1
+
+- Một máy = một kho dữ liệu; chưa dùng chung thời gian thực giữa nhiều người
+- Chưa có phân quyền / đăng nhập
+- Evidence (ảnh chụp màn hình) lưu dạng base64 trong IndexedDB, giới hạn 6MB mỗi file — dung lượng lớn nên cân nhắc chỉ đính kèm ảnh thật cần thiết
+- Chưa đồng bộ với Jira / Redmine
