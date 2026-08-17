@@ -1,0 +1,15 @@
+# Cấu hình Netlify cho ASC-UAT.
+# Có file này thì khi deploy từ Git, Netlify tự build và tự lấy đúng thư mục dist/.
+[build]
+  command = "npm run build:all"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# App dùng hash routing (#/dashboard) nên không cần rewrite,
+# nhưng giữ fallback này để gõ nhầm đường dẫn vẫn về đúng trang chủ.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

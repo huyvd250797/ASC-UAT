@@ -27,7 +27,9 @@ Copy **toàn bộ** nội dung `dist/` (gồm cả thư mục `assets/`) lên we
 | Môi trường | Cách làm |
 |---|---|
 | IIS / Apache / Nginx | Copy nội dung `dist/` vào web root |
-| Vercel / Netlify | Kéo thả thư mục `dist/` vào trang deploy |
+| Netlify (kéo thả) | Kéo thả **đúng thư mục `dist/`** — xem cảnh báo bên dưới |
+| Netlify (từ Git) | Đã có sẵn `netlify.toml`: build `npm run build:all`, publish `dist` |
+| Vercel | Kéo thả thư mục `dist/`, hoặc đặt Output Directory = `dist` |
 | Test thử ngay | `npx serve dist` rồi mở link hiện ra |
 
 Đường dẫn tài nguyên ở dạng tương đối nên đặt trong thư mục con vẫn chạy, ví dụ `https://intranet.company.vn/uat/`.
@@ -45,7 +47,19 @@ Từ phiên bản này, app không còn trắng trơn nữa: khi không khởi �
 | Trắng, Console báo "MIME type ... not executable" | Máy chủ chưa khai báo `.js` | Thêm MIME `.js` → `text/javascript` (IIS: Feature MIME Types), hoặc dùng bản một file |
 | Hiện bảng "Không mở được kho dữ liệu" | Trình duyệt chặn IndexedDB | Tắt chế độ ẩn danh, cho phép site lưu dữ liệu |
 
-Nhanh nhất trong mọi trường hợp: dùng `asc-uat-standalone.html`.
+### Lỗi hay gặp nhất khi deploy lên Netlify
+
+Nếu bạn kéo thả **cả thư mục dự án** (hoặc giải nén file zip rồi kéo cả thư mục) lên Netlify, trang sẽ trắng.
+
+Lý do: `index.html` ở gốc dự án là file dành cho môi trường phát triển, nó trỏ tới `/src/main.tsx` —
+mã TypeScript chưa biên dịch, trình duyệt không chạy được.
+
+Chỉ kéo thả **thư mục `dist/`**. Sau khi deploy đúng, trang gốc phải nạp file dạng
+`assets/index-xxxxxxx.js`; nếu Console (F12) thấy nó đang gọi `/src/main.tsx` thì bạn đang deploy nhầm thư mục.
+
+Nếu deploy từ Git, file `netlify.toml` kèm sẵn đã khai báo build command và publish directory nên không cần chỉnh gì.
+
+Nhanh nhất trong mọi trường hợp: dùng `asc-uat-standalone.html` — kéo riêng file đó lên cũng chạy.
 
 ## 2. Build lại từ source
 

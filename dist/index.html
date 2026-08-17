@@ -25,8 +25,11 @@
         <h1>ASC-UAT chưa khởi động được</h1>
         <p>Nếu bạn thấy màn hình này quá vài giây, ứng dụng đã không tải được mã nguồn. Nguyên nhân thường gặp:</p>
         <ul>
+          <li><b>Deploy nhầm thư mục.</b> Đây là file <code>index.html</code> ở gốc dự án, chỉ dùng cho môi trường
+              phát triển. Bản để deploy nằm trong thư mục <code>dist/</code>.
+              Với Netlify: chỉ kéo thả <b>thư mục <code>dist/</code></b>, không kéo cả thư mục dự án hay file zip.</li>
           <li>Đang mở bằng đường dẫn <code>file://</code> — hãy phục vụ qua HTTP, hoặc dùng bản một file
-              <code>asc-uat-standalone.html</code> kèm trong gói.</li>
+              <code>dist/asc-uat-standalone.html</code>.</li>
           <li>Máy chủ chưa khai báo MIME type cho <code>.js</code> (thường gặp ở IIS nội bộ).</li>
           <li>Thư mục <code>assets/</code> chưa được copy lên cùng <code>index.html</code>.</li>
         </ul>
