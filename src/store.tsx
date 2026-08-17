@@ -12,6 +12,7 @@ export interface Toast { id: string; text: string; tone: 'ok' | 'error' | 'info'
 interface Ctx {
   ready: boolean;
   loading: boolean;
+  dbError: string | null;
   projects: Project[];
   project?: Project;
   cycles: UATCycle[];
@@ -47,6 +48,7 @@ export const useApp = () => useContext(AppCtx);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState<string | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectId, setProjectId] = useState<string | undefined>();
   const [cycleId, setCycleId] = useState<string | undefined>();
@@ -64,14 +66,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   /* ------------------------------ bootstrap ------------------------------ */
   useEffect(() => {
     (async () => {
-      const savedTheme = await settingsRepo.get<'dark' | 'light'>('theme', 'dark');
-      setTheme(savedTheme);
-      const list = await projectRepo.all();
-      setProjects(list);
-      const lastProject = await settingsRepo.get<string | null>('lastProjectId', null);
-      const pid = list.find((p) => p.id === lastProject)?.id || list[0]?.id;
-      setProjectId(pid);
-      setReady(true);
+      try {
+        const savedTheme = await settingsRepo.get<'dark' | 'light'>('theme', 'dark');
+        setTheme(savedTheme);
+        const list = await projectRepo.all();
+        setProjects(list);
+        const lastProject = await settingsRepo.get<string | null>('lastProjectId', null);
+        const pid = list.find((p) => p.id === lastProject)?.id || list[0]?.id;
+        setProjectId(pid);
+      } catch (e: any) {
+        // Trình duyệt chặn IndexedDB: chế độ ẩn danh, mở bằng file://, hoặc chính sách chặn site data.
+        setDbError(e?.name === 'MissingAPIError' || /IndexedDB/i.test(e?.message || '')
+          ? 'Trình duyệt không cho phép ứng dụng lưu dữ liệu (IndexedDB bị chặn).'
+          : `Không mở được kho dữ liệu: ${e?.message || 'lỗi không xác định'}`);
+      } finally {
+        setLoading(false);
+        setReady(true);
+      }
     })();
   }, []);
 
@@ -185,7 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [executions]);
 
   const value: Ctx = {
-    ready, loading, projects, project, cycles, cycle, modules, features, testCases, executions, issues,
+    ready, loading, dbError, projects, project, cycles, cycle, modules, features, testCases, executions, issues,
     activities, planCaseIds, planCases, execMap,
     selectProject: (id) => { setProjectId(id); setCycleId(undefined); },
     selectCycle: (id) => setCycleId(id),

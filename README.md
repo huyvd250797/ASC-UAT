@@ -6,20 +6,46 @@ Web app quản lý **Test Case → UAT Execution → Issue → Retest → Báo c
 
 ---
 
-## 1. Deploy nhanh nhất (2 phút)
+## 1. Deploy nhanh nhất
 
-Thư mục **`dist/`** trong gói này đã được build sẵn. Chỉ cần đưa toàn bộ nội dung `dist/` lên bất kỳ web server tĩnh nào:
+Gói này có **hai bản chạy được**, chọn một:
+
+### Cách A — bản một file (chống lỗi nhất)
+
+`dist/asc-uat-standalone.html` — toàn bộ ứng dụng nằm trong đúng một file HTML, không cần file phụ nào.
+
+- Copy đi đâu cũng chạy: web server, ổ mạng, USB, gửi qua email
+- Chạy được cả khi mở trực tiếp bằng cách nhấp đúp (`file://`)
+- Không phụ thuộc cấu hình MIME type của máy chủ
+
+Đây là cách nên dùng nếu bạn từng gặp màn hình trắng.
+
+### Cách B — bản thư mục
+
+Copy **toàn bộ** nội dung `dist/` (gồm cả thư mục `assets/`) lên web server tĩnh:
 
 | Môi trường | Cách làm |
 |---|---|
-| IIS / Apache / Nginx | Copy nội dung `dist/` vào thư mục web root |
+| IIS / Apache / Nginx | Copy nội dung `dist/` vào web root |
 | Vercel / Netlify | Kéo thả thư mục `dist/` vào trang deploy |
-| Chia sẻ nội bộ | Copy `dist/` vào ổ mạng, mở `index.html` bằng trình duyệt |
 | Test thử ngay | `npx serve dist` rồi mở link hiện ra |
 
-Đường dẫn tài nguyên đã cấu hình dạng tương đối (`base: './'`), nên app chạy được cả khi đặt trong thư mục con, ví dụ `https://intranet.company.vn/uat/`.
+Đường dẫn tài nguyên ở dạng tương đối nên đặt trong thư mục con vẫn chạy, ví dụ `https://intranet.company.vn/uat/`.
 
-**Không mở trực tiếp bằng `file://`** — trình duyệt sẽ chặn module JavaScript. Luôn phục vụ qua HTTP.
+---
+
+## 1b. Nếu gặp MÀN HÌNH TRẮNG
+
+Từ phiên bản này, app không còn trắng trơn nữa: khi không khởi động được, nó hiển thị luôn nguyên nhân trên màn hình. Các trường hợp thường gặp với bản thư mục (cách B):
+
+| Triệu chứng | Nguyên nhân | Xử lý |
+|---|---|---|
+| Trắng, Console báo lỗi CORS / module | Mở bằng `file://` | Dùng bản một file, hoặc phục vụ qua HTTP |
+| Trắng, Console báo 404 ở `assets/...` | Chưa copy thư mục `assets/` | Copy đủ cả `assets/` |
+| Trắng, Console báo "MIME type ... not executable" | Máy chủ chưa khai báo `.js` | Thêm MIME `.js` → `text/javascript` (IIS: Feature MIME Types), hoặc dùng bản một file |
+| Hiện bảng "Không mở được kho dữ liệu" | Trình duyệt chặn IndexedDB | Tắt chế độ ẩn danh, cho phép site lưu dữ liệu |
+
+Nhanh nhất trong mọi trường hợp: dùng `asc-uat-standalone.html`.
 
 ## 2. Build lại từ source
 
@@ -27,8 +53,10 @@ Yêu cầu Node.js 18 trở lên.
 
 ```bash
 npm install
-npm run build      # kết quả nằm trong dist/
-npm run dev        # chạy môi trường phát triển tại http://localhost:5173
+npm run build             # bản thư mục -> dist/
+npm run build:standalone  # bản một file -> dist/asc-uat-standalone.html
+npm run build:all         # tạo cả hai
+npm run dev               # môi trường phát triển tại http://localhost:5173
 ```
 
 ---

@@ -5,9 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0b1120" />
     <title>ASC-UAT · Quản lý Test Case & UAT</title>
+    <style>
+      body { margin: 0; background: #070b14; color: #e6edf7;
+             font-family: Inter, 'Segoe UI', system-ui, sans-serif; }
+      #boot { max-width: 620px; margin: 12vh auto; padding: 24px; line-height: 1.7; font-size: 14px; }
+      #boot h1 { font-size: 17px; margin: 0 0 12px; }
+      #boot code { background: #1a2436; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+      #boot ul { padding-left: 20px; }
+      #boot .err { color: #f87171; white-space: pre-wrap; font-family: ui-monospace, monospace;
+                   font-size: 12px; margin-top: 12px; }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Hiển thị khi JavaScript chưa chạy được. React sẽ thay thế toàn bộ khối này khi khởi động thành công. -->
+      <div id="boot">
+        <h1>ASC-UAT chưa khởi động được</h1>
+        <p>Nếu bạn thấy màn hình này quá vài giây, ứng dụng đã không tải được mã nguồn. Nguyên nhân thường gặp:</p>
+        <ul>
+          <li>Đang mở bằng đường dẫn <code>file://</code> — hãy phục vụ qua HTTP, hoặc dùng bản một file
+              <code>asc-uat-standalone.html</code> kèm trong gói.</li>
+          <li>Máy chủ chưa khai báo MIME type cho <code>.js</code> (thường gặp ở IIS nội bộ).</li>
+          <li>Thư mục <code>assets/</code> chưa được copy lên cùng <code>index.html</code>.</li>
+        </ul>
+        <p>Mở Console của trình duyệt (F12) để xem lỗi cụ thể.</p>
+        <div class="err" id="boot-err"></div>
+      </div>
+    </div>
+    <script>
+      window.addEventListener('error', function (e) {
+        var el = document.getElementById('boot-err');
+        if (el) el.textContent = 'Lỗi: ' + (e.message || '') + (e.filename ? ' (' + e.filename + ')' : '');
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
